@@ -1,5 +1,5 @@
 # SSLCERTS
-This project contains a group of utilities for ssl certificates
+This project contains a group of utilities for ssl keys and certificates.
 
 1. [Versioning](#Versioning)
 2. [License](#License)
