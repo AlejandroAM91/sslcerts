@@ -1,0 +1,109 @@
+name: Release
+on:
+  push:
+    tags: ["v*.*.*"]
+
+env:
+  PROJECT_NAME: sslcerts
+
+jobs:
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Version
+        id: version
+        run: |
+          VERSION=$(git describe --tags --abbrev=0)
+          echo "::set-output name=version::$VERSION"
+      - name: Archive release files
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-files
+          path: |
+            CHANGELOG.md
+            LICENSE.md
+
+  build:
+    name: Build
+    strategy:
+      matrix: 
+        os: [ubuntu-latest, windows-latest]
+        bin: [sslcerts]
+        include:
+          - os: windows-latest
+            ext: .exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      - name: Build
+        run: go build -v -o ${{ matrix.bin }}${{ matrix.ext }} ./cmd/${{ matrix.bin }}/main.go
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts-${{ matrix.os }}
+          path: ${{ matrix.bin }}${{ matrix.ext }}
+  package:
+    name: Package
+    needs: [build, prepare]
+    strategy:
+      matrix: 
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: windows-latest
+            name: windows
+          - os: ubuntu-latest
+            name: linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Package name
+        id: package
+        run: echo "::set-output name=package::${{ env.PROJECT_NAME }}_${{ matrix.name }}_x86-64_${{ needs.prepare.outputs.version }}.zip"
+      - name: Download binary files
+        uses: actions/download-artifact@v3
+        with:
+          name: artifacts-${{ matrix.os }}
+      - name: Download release files
+        uses: actions/download-artifact@v3
+        with:
+          name: release-files
+      - name: Package
+        run: |
+          zip ${{ steps.package.outputs.package }} *
+      - name: Archive
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: ${{ steps.package.outputs.package }}
+  release:
+    name: Release
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: artifacts
+      - name: Release notes
+        uses: ffurrer2/extract-release-notes@v1
+        with:
+          release_notes_file: RELEASE.md
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: ${{ github.workspace }}/RELEASE.md
+          files: "*.zip"
+            
+
+  
