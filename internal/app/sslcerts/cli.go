@@ -11,8 +11,6 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const version = "0.0.0"
-
 const (
 	cliFlagCAName          = "ca"
 	cliFlagCertName        = "cert"
@@ -30,7 +28,7 @@ func Cli() *cli.App {
 	return &cli.App{
 		Name:    "sslcerts",
 		Usage:   "Generates ssl keys and certificates",
-		Version: version,
+		Version: VERSION,
 		Commands: []*cli.Command{
 			{
 				Name:  "key",

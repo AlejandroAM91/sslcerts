@@ -27,7 +27,6 @@ jobs:
           path: |
             CHANGELOG.md
             LICENSE.md
-
   build:
     name: Build
     strategy:
