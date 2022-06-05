@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/AlejandroAM91/sslcerts/internal/pkg/sslcerts"
+	"github.com/AlejandroAM91/sslcerts/internal/app/sslcerts"
 )
 
 func main() {

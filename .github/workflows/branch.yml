@@ -1,0 +1,21 @@
+name: Branch
+on: push
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      matrix: 
+        os: [linux, windows]
+    runs-on: windows-latest
+    env:
+      GOOS: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      - name: Test
+        run: go test .\...

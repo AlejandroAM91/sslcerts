@@ -31,12 +31,14 @@ jobs:
     name: Build
     strategy:
       matrix: 
-        os: [ubuntu-latest, windows-latest]
+        os: [linux, windows]
         bin: [sslcerts]
         include:
-          - os: windows-latest
+          - os: windows
             ext: .exe
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
+    env:
+      GOOS: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -44,6 +46,8 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.18
+      - name: Test
+        run: go test .\...
       - name: Build
         run: go build -v -o ${{ matrix.bin }}${{ matrix.ext }} ./cmd/${{ matrix.bin }}/main.go
       - name: Archive
@@ -56,17 +60,12 @@ jobs:
     needs: [build, prepare]
     strategy:
       matrix: 
-        os: [ubuntu-latest, windows-latest]
-        include:
-          - os: windows-latest
-            name: windows
-          - os: ubuntu-latest
-            name: linux
+        os: [linux, windows]
     runs-on: ubuntu-latest
     steps:
       - name: Package name
         id: package
-        run: echo "::set-output name=package::${{ env.PROJECT_NAME }}_${{ matrix.name }}_x86-64_${{ needs.prepare.outputs.version }}.zip"
+        run: echo "::set-output name=package::${{ env.PROJECT_NAME }}_${{ matrix.os }}_x86-64_${{ needs.prepare.outputs.version }}.zip"
       - name: Download binary files
         uses: actions/download-artifact@v3
         with:
